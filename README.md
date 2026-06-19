@@ -83,6 +83,19 @@ malicious actors with root access to the aws account cannot decrypt storage payl
 the wiper service queries the postgres instance for expired records every five minutes
 it issues delete operations directly to the s3 bucket and subsequently scrubs all database metadata to guarantee ephemeral constraints are strictly enforced
 
+### stride threat model
+
+to ensure robust security, irminsul was evaluated using the stride-lite threat model. refer to `docs/architecture.md` for full details.
+
+| threat | example scenario | mitigation |
+| --- | --- | --- |
+| **spoofing** | attacker spoofs vault service to the frontend | strict tls enforcement at application load balancer and ingress; kubernetes network policies restrict frontend pod ingress to the ingress namespace. |
+| **tampering** | attacker mutates ciphertext in-flight or in s3 | aes-gcm provides authenticated encryption (aead); tampering results in immediate decryption failure on the client. s3 versioning and lifecycle policies protect against non-current version tampering. |
+| **repudiation** | user repudiates uploading a file | `access_log` table in postgres logs `upload_init` and `download` events with ip and user-agent. kubernetes audit logs track api server interactions. |
+| **information disclosure** | server remote code execution (rce) leaks plaintext | plaintext never leaves the user agent. vault only handles metadata and ciphertext length. presigned urls expire quickly (~5m). |
+| **denial of service** | attacker exhausts s3 storage or rds connections | alb rate limiting, per-upload size caps, and file count limits per ip via postgres. |
+| **elevation of privilege** | vault pod attempts unauthorized `s3:deleteobject` | strict iam policies scoped per-workload (vault role has put/get only, wiper role has del/list only). network policies block pod-to-pod lateral movement. |
+
 ## environment teardown
 
 ```bash
