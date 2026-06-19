@@ -1,0 +1,30 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: wiper-allow-egress
+  namespace: irminsul
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: wiper
+  policyTypes:
+    - Egress
+  egress:
+    # IMDS for AWS credentials (instance profile)
+    - to:
+        - ipBlock:
+            cidr: 169.254.169.254/32
+      ports:
+        - protocol: TCP
+          port: 80
+    # S3, RDS, and other AWS services
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 169.254.169.254/32
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 5432
