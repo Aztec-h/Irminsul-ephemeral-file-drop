@@ -8,6 +8,8 @@ the infrastructure stack is deployed to amazon web services via a fully automate
 
 ## architecture 
 
+![Irminsul Architecture](docs/diagrams/architecture.png)
+
 * frontend application handles in-browser payload encryption using aes-256-gcm with a key derived via pbkdf2 and 300,000 iterations
 * plaintext bytes never leave the client environment
 * vault service generates single-use ephemeral presigned s3 urls and persists only file metadata (identifier, sha256 hash, size, time-to-live, remaining downloads) within the postgres database
